@@ -1,6 +1,5 @@
-package myproject_springjdbc;
+package myproject_springjdbc.repository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -10,25 +9,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
+import java.util.List;
 
 @Repository
 public class ProductRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final String sql;
 
-    @Autowired
+    // Читаем SQL-скрипт в конструкторе
     public ProductRepository(NamedParameterJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.sql = read("getProductByName.sql");  // Считываем SQL-скрипт один раз при создании объекта
     }
 
-    public String getProductByName(String name) {
-        // Чтение скрипта из resources
-        String sql = read("getProductByName.sql");
+    // Метод может возвращать список строк (возможно, несколько продуктов)
+    public List<String> getProductByName(String name) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("name", name.toLowerCase());  // Используем строку в нижнем регистре для поиска
 
-        // Выполнение запроса
-        return jdbcTemplate.queryForObject(sql, params, String.class);
+        // Используем query для возвращения списка строк
+        return jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("product_name"));
     }
 
     private String read(String scriptFileName) {
